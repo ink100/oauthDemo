@@ -16,6 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import com.daym.oauth2.filter.JwtRequestFilter;
 import org.springframework.web.multipart.MultipartResolver;
+import org.springframework.web.multipart.support.MultipartFilter;
 import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 
 import java.util.List;
@@ -93,9 +94,5 @@ public class ResourceServerConfig {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
-    // 配置 MultipartResolver
-    @Bean
-    public MultipartResolver multipartResolver() {
-        return new StandardServletMultipartResolver();
-    }
+
 }
