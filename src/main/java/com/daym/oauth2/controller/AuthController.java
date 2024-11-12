@@ -11,6 +11,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
 /**
  * Created with IntelliJ IDEA.
  *
@@ -30,10 +33,14 @@ public class AuthController {
     private UserDetailsService userDetailsService;
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody AuthRequest authRequest) {
+    @ResponseBody
+    public ResponseEntity< Map<String, String>> login(@RequestBody AuthRequest authRequest) {
         UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getUsername());
-        String jwt = jwtUtil.generateToken(userDetails.getUsername());
-
-        return ResponseEntity.ok(jwt);
+        Map<String, String> returnMap = jwtUtil.generateTokens(userDetails.getUsername(), "", authRequest.getRemeberMe());
+        return ResponseEntity.ok(returnMap);
+    }
+    @PostMapping("/test/showValue")
+    public String showValue() {
+        return "返回陈工";
     }
 }

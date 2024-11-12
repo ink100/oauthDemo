@@ -14,6 +14,7 @@ import lombok.Data;
 public class AuthRequest {
     private String username;
     private String password;
+    private Boolean remeberMe = false;
 
     // getters and setters
 }

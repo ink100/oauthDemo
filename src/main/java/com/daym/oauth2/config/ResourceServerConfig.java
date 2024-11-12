@@ -1,22 +1,24 @@
 package com.daym.oauth2.config;
 
 
-import com.daym.oauth2.fillter.JwtRequestFilter;
+import com.daym.oauth2.security.handler.*;
 import com.daym.oauth2.security.service.WhitelistUrlService;
 import com.daym.oauth2.utils.JwtUtil;
 import jakarta.annotation.Resource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import com.daym.oauth2.filter.JwtRequestFilter;
+import org.springframework.web.multipart.MultipartResolver;
+import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 
 import java.util.List;
-import java.util.function.IntFunction;
 
 /**
  * Created with IntelliJ IDEA.
@@ -32,27 +34,68 @@ public class ResourceServerConfig {
 
     @Resource
     private JwtUtil jwtUtil;
+    @Resource
+    private OAuth2LoginSuccessHandler loginSuccessHandler;
+
+    @Resource
+    private OAuth2LoginFailureHandler loginFailureHandler;
+
+    @Resource
+    private CustomLogoutSuccessHandler logoutSuccessHandler;
+
+    @Resource
+    private SwitchAccountSuccessHandler switchAccountSuccessHandler;
 
     @Resource
     private WhitelistUrlService whitelistService;
 
+    @Resource
+    private UserDetailsService userDetailsService;
+    @Resource
+    private JwtAuthenticationEntryPoint unauthorizedHandler;  // 自定义未认证处理器
+    @Resource
+    private DefaultAccessDeniedHandler accessDeniedHandler;
 
     @Bean
     public SecurityFilterChain configure(HttpSecurity http) throws Exception {
         List<String> whitelistUrls = whitelistService.getWhitelistUrls();
         String[] whiteUrls = whitelistUrls.stream().toArray(String[]::new);
         http.csrf(csrf -> csrf.disable())
-                .authorizeRequests()
-                .requestMatchers(whiteUrls)
-                .permitAll()
-                .anyRequest().authenticated()
-                .and()
-                .addFilterBefore(new JwtRequestFilter(jwtUtil,whitelistUrls), UsernamePasswordAuthenticationFilter.class);
+                .authorizeHttpRequests(authorizeRequests -> {
+                    authorizeRequests
+                            .requestMatchers(whiteUrls)  // 允许白名单 URL 不需要认证
+                            .permitAll()
+                            .anyRequest().authenticated();  // 其他请求需要认证
+                })
+                .oauth2Login(oauth2Login -> oauth2Login
+//                            .loginPage("/login")
+                        .successHandler(loginSuccessHandler)
+                        .failureHandler(loginFailureHandler))
+                .logout(logout -> logout.clearAuthentication(true)
+                        .logoutUrl("/logout")
+                        .logoutSuccessHandler(logoutSuccessHandler)) // 配置登出
+                .exceptionHandling(exception -> {
+                    exception.authenticationEntryPoint(unauthorizedHandler)
+                            .accessDeniedHandler(accessDeniedHandler);
+                })
+                .addFilterBefore(new MultipartFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtRequestFilter(userDetailsService, jwtUtil, whitelistUrls), UsernamePasswordAuthenticationFilter.class)
+
+//                .authenticationProvider(usernamePasswordAuthenticationProvider())
+        ;
+
         return http.build();
     }
+
     // 配置 AuthenticationManager Bean
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
+    }
+
+    // 配置 MultipartResolver
+    @Bean
+    public MultipartResolver multipartResolver() {
+        return new StandardServletMultipartResolver();
     }
 }

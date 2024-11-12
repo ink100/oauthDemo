@@ -4,5 +4,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.daym.oauth2.entity.SysConfig;
 
 public interface SysConfigService extends IService<SysConfig> {
+    SysConfig selectByConfigKey(String key);
     // 其他业务方法
 }

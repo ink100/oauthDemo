@@ -1,20 +1,12 @@
-package com.daym.oauth2.fillter;
+package com.daym.oauth2.filter;
 
-/**
- * Created with IntelliJ IDEA.
- *
- * @author: Date: 2024/10/31
- * Time: 13:26
- * To change this template use File | Settings | File Templates.
- * Description:
- */
 import com.daym.oauth2.utils.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,55 +15,69 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
 
+    private static final String DEVICE_ID_COOKIE = "Device-Id";
     private final JwtUtil jwtUtil;
+    private final UserDetailsService userDetailsService;
+    private final List<String> whiteUrlList;
 
-    @Autowired
-    private UserDetailsService userDetailsService;
-
-    private final List<String> whiteUrllist;
-
-    public JwtRequestFilter(JwtUtil jwtUtil, List<String> whiteUrllist) {
+    public JwtRequestFilter(UserDetailsService userDetailsService, JwtUtil jwtUtil, List<String> whiteUrlList) {
         this.jwtUtil = jwtUtil;
-        this.whiteUrllist = whiteUrllist;  // 接收动态白名单
+        this.userDetailsService = userDetailsService;
+        this.whiteUrlList = whiteUrlList;  // 接收动态白名单
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
-        final String authorizationHeader = request.getHeader("Authorization");
-        String username = null;
-        String jwt = null;
-        String path = request.getRequestURI();
+        final String authorizationHeader = request.getHeader(jwtUtil.getAccessTokenName());
 
-        // 跳过白名单中的请求
-        if (whiteUrllist.contains(path)) {
+        String jwt = null;
+        String username = null;
+        String path = request.getRequestURI();
+        String deviceId = request.getHeader("deviceId");  // 尝试从请求头中获取 Device-Id
+        String remerberme=null;
+
+        // 如果请求路径在白名单中，直接放行
+        if (whiteUrlList.contains(path)) {
             chain.doFilter(request, response);
             return;
         }
+
+        // 从授权头获取 token，并解析用户名
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             jwt = authorizationHeader.substring(7);
             username = jwtUtil.extractUsername(jwt);
-        }
-
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-            if (jwtUtil.validateToken(jwt, userDetails.getUsername())) {
-                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                usernamePasswordAuthenticationToken
-                        .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+            if (deviceId == null) {
+                deviceId =jwtUtil.extractDeviceId(jwt);// 如果 Device-Id 不存在，生成或获取
             }
         }
+
+
+        // 验证 token 和 deviceId，并在安全上下文中设置用户身份
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+            // 使用 JwtUtil 验证 token 的有效性和 deviceId
+            if (jwtUtil.validateToken(jwt, userDetails.getUsername(), deviceId)) {
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
+        }
+
+        // 继续过滤链
         chain.doFilter(request, response);
     }
+
+
 }
