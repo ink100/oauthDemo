@@ -6,19 +6,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Part;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 自定义未授权访问处理器，支持多种 Content-Type 请求体解析
@@ -72,19 +70,17 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
             }
         }
 
-        log.error("Error Message: {}", authException.getMessage(), authException);
+//        log.error("Error Message: {}", authException.getMessage(), authException);
     }
     private void handleMultipartBody(HttpServletRequest request) {
-        /*if (!(request instanceof MultipartHttpServletRequest multipartRequest)) {
-            log.error("MultipartHttpServletRequest not detected. Ensure a MultipartResolver is configured.");
-            return;
-        }*/
+
 
         try {
             Map<String, Object> jsonMap = new HashMap<>();
-            MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+
+
             // 处理普通表单字段
-            multipartRequest.getParameterMap().forEach((key, values) -> {
+            request.getParameterMap().forEach((key, values) -> {
                 if (values != null && values.length > 1) {
                     jsonMap.put(key, values); // 多值字段
                 } else if (values != null && values.length == 1) {
@@ -94,20 +90,9 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
                 }
             });
 
-            // 处理文件字段
-            Map<String, Object> fileMap = new HashMap<>();
-            multipartRequest.getFileMap().forEach((fieldName, file) -> {
-                if (!file.isEmpty()) {
-                    Map<String, Object> fileDetails = new HashMap<>();
-                    fileDetails.put("originalFilename", file.getOriginalFilename());
-                    fileDetails.put("size", file.getSize());
-                    fileDetails.put("contentType", file.getContentType());
-                    fileMap.put(fieldName, fileDetails);
-                } else {
-                    fileMap.put(fieldName, "EMPTY_FILE");
-                }
-            });
-            jsonMap.put("files", fileMap);
+            List<HashMap<String, Object>> files = getFilesHashMap(request);
+
+            jsonMap.put("files", files);
 
             // 输出为 JSON 字符串
             String jsonString = new ObjectMapper().writeValueAsString(jsonMap);
@@ -116,6 +101,25 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         } catch (Exception e) {
             log.error("Failed to process multipart request: {}", e.getMessage(), e);
         }
+    }
+
+    private static List<HashMap<String, Object>> getFilesHashMap(HttpServletRequest request) throws IOException, ServletException {
+        List<HashMap<String,Object>> files=new ArrayList<>();
+        // 处理文件字段
+        Collection<Part> parts = request.getParts();
+
+        for (Part part : parts) {
+            HashMap<String,Object> fileMap=new HashMap<>();
+            // 判断该 part 是否为文件
+            if (part.getContentType() != null) {
+                fileMap.put("paramName",part.getName());
+                fileMap.put("fileName",part.getSubmittedFileName());
+                fileMap.put("fileSize", part.getSize());
+                files.add(fileMap);
+            }
+
+        }
+        return files;
     }
 
     /**

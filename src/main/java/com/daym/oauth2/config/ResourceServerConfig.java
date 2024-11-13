@@ -69,7 +69,6 @@ public class ResourceServerConfig {
                             .anyRequest().authenticated();  // 其他请求需要认证
                 })
                 .oauth2Login(oauth2Login -> oauth2Login
-//                            .loginPage("/login")
                         .successHandler(loginSuccessHandler)
                         .failureHandler(loginFailureHandler))
                 .logout(logout -> logout.clearAuthentication(true)
@@ -79,7 +78,6 @@ public class ResourceServerConfig {
                     exception.authenticationEntryPoint(unauthorizedHandler)
                             .accessDeniedHandler(accessDeniedHandler);
                 })
-                .addFilterBefore(new MultipartFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new JwtRequestFilter(userDetailsService, jwtUtil, whitelistUrls), UsernamePasswordAuthenticationFilter.class)
 
 //                .authenticationProvider(usernamePasswordAuthenticationProvider())
