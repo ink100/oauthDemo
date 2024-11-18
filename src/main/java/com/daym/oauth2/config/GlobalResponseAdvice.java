@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 import org.springframework.web.context.request.WebRequest;
 
-@ControllerAdvice
+@ControllerAdvice(basePackages = "com.daym.oauth2")
 public class GlobalResponseAdvice implements ResponseBodyAdvice<Object> {
 
     /**
@@ -35,9 +35,14 @@ public class GlobalResponseAdvice implements ResponseBodyAdvice<Object> {
         // 如果返回值为 null，统一处理为成功响应
         if (body == null) {
             return ApiResponse.success(null);  // 返回空的数据部分，但状态为200
+        }else if (body instanceof ApiResponse) {
+            return body;
+        }else{
+            // 如果返回值是一个普通类型的数据，直接封装成 ApiResponse
+            return ApiResponse.success(body);
         }
 
-        // 如果返回值是一个普通类型的数据，直接封装成 ApiResponse
-        return ApiResponse.success(body);
+
+
     }
 }

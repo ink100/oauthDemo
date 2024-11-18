@@ -35,7 +35,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
         // 构建 ApiResponse
-        ApiResponse<String> apiResponse = ApiResponse.of(HttpServletResponse.SC_UNAUTHORIZED, "Token is missing or invalid",null);
+        ApiResponse<String> apiResponse = ApiResponse.error(HttpServletResponse.SC_UNAUTHORIZED, "Token is missing or invalid");
 
         // 写入响应
         writeResponse(response, apiResponse);
@@ -55,8 +55,9 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         log.error("Client IP: {}", request.getRemoteAddr());
 
         String contentType = request.getContentType();
-        MediaType mediaType = MediaType.parseMediaType(contentType);
+
         if (contentType != null) {
+            MediaType mediaType = MediaType.parseMediaType(contentType);
             log.error("Content-Type: {}", contentType);
 
             if (mediaType.includes(MediaType.MULTIPART_FORM_DATA)) {

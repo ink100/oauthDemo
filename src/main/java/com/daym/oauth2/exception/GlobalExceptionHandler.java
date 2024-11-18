@@ -1,5 +1,6 @@
 package com.daym.oauth2.exception;
 
+import cn.hutool.core.util.IdUtil;
 import com.daym.oauth2.response.ApiResponse;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -63,9 +64,10 @@ public class GlobalExceptionHandler {
     // 处理其他未捕获的异常
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<?>> handleException(Exception ex) {
-        logger.error("服务器内部错误：", ex);
+        String errorId = IdUtil.nanoId(32);
+        logger.error("errorId={}服务器内部错误：", errorId,ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "服务器内部错误"));
+                .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "服务器内部错误,错误编码为:"+errorId));
     }
 
 

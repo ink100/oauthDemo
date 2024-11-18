@@ -2,16 +2,20 @@ package com.daym.oauth2.config;
 
 
 import com.daym.oauth2.security.handler.*;
+import com.daym.oauth2.security.provider.UsernamePasswordAuthenticationProvider;
 import com.daym.oauth2.security.service.WhitelistUrlService;
 import com.daym.oauth2.utils.JwtUtil;
 import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import com.daym.oauth2.filter.JwtRequestFilter;
@@ -68,9 +72,17 @@ public class ResourceServerConfig {
                             .permitAll()
                             .anyRequest().authenticated();  // 其他请求需要认证
                 })
+                .formLogin(form -> form
+//                        .loginPage("/login")  // 自定义登录页面
+                        .loginProcessingUrl("/login")  // 处理登录请求
+                        .defaultSuccessUrl("/home", true)  // 登录成功后跳转的 URL
+                        .failureUrl("/loginError?error=true")// 登录失败后跳转的 URL
+
+                )
                 .oauth2Login(oauth2Login -> oauth2Login
                         .successHandler(loginSuccessHandler)
                         .failureHandler(loginFailureHandler))
+
                 .logout(logout -> logout.clearAuthentication(true)
                         .logoutUrl("/logout")
                         .logoutSuccessHandler(logoutSuccessHandler)) // 配置登出
@@ -79,11 +91,17 @@ public class ResourceServerConfig {
                             .accessDeniedHandler(accessDeniedHandler);
                 })
                 .addFilterBefore(new JwtRequestFilter(userDetailsService, jwtUtil, whitelistUrls), UsernamePasswordAuthenticationFilter.class)
-
-//                .authenticationProvider(usernamePasswordAuthenticationProvider())
+                .authenticationProvider(usernamePasswordAuthenticationProvider())
+//                .authenticationProvider(phoneNumberAuthenticationProvider())
+//                .authenticationProvider(emailAuthenticationProvider())
         ;
 
         return http.build();
+    }
+
+    @Bean
+    public UsernamePasswordAuthenticationProvider usernamePasswordAuthenticationProvider() {
+        return new UsernamePasswordAuthenticationProvider();
     }
 
     // 配置 AuthenticationManager Bean
@@ -91,6 +109,9 @@ public class ResourceServerConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
-
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return  new BCryptPasswordEncoder();
+    }
 
 }

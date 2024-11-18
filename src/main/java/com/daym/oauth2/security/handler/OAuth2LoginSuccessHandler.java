@@ -31,8 +31,8 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         Map<String, String> tokens = jwtUtil.generateTokens(username, deviceId, rememberMe);
 
         // 将生成的 Tokens 放到响应头中
-        response.setHeader("Authorization", "Bearer " + tokens.get(jwtUtil.getAccessTokenName()));
-        response.setHeader("Refresh-Token", tokens.get(jwtUtil.getRefreshTokenName()));
+        response.setHeader(jwtUtil.getAccessTokenName(), "Bearer " + tokens.get(jwtUtil.getAccessTokenName()));
+        response.setHeader(jwtUtil.getRefreshTokenName(), tokens.get(jwtUtil.getRefreshTokenName()));
 
         // 可选：如果需要重定向到某个 URL，可以在此处设置
         String redirectUrl = UriComponentsBuilder.fromUriString("http://localhost:8080/home")

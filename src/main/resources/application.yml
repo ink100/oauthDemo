@@ -28,8 +28,8 @@ spring:
     data:
     redis:
       host: aaaa
-      port: 6379
-      password: xxx
+      port: xxx
+      password: myc2013.06
       timeout: 6000ms
 
   # OAuth2 Client Configuration
@@ -94,3 +94,32 @@ logging:
   level:
     org.springframework.security: DEBUG
     com.daym.oauth2: DEBUG
+# springdoc-openapi项目配置
+springdoc:
+  swagger-ui:
+    #自定义swagger前端请求路径,输入http:localhost:8080/doc.html会自动重定向到swagger页面
+    path: /doc.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs    #swagger后端请求地址
+    enabled: true   #是否开启文档功能
+  group-configs:
+    - group: 'default'   #分组名称
+      paths-to-match: '/**'   #配置需要匹配的路径,默认为/**
+      packages-to-scan: com.blog.patrick    #配置要扫描包的路径,一般配置到启动类所在的包名
+
+# knife4j的增强配置，不需要增强可以不配(建议配置一下)
+knife4j:
+  enable: true    #开启knife4j,无需添加@EnableKnife4j注解
+  setting:
+    language: zh_cn   #中文
+    swagger-model-name: 实体类列表   #重命名SwaggerModel名称,默认
+  #开启Swagger的Basic认证功能,默认是false
+  basic:
+    enable: true
+    # Basic认证用户名
+    username: docuser
+    # Basic认证密码
+    password: docuser
+

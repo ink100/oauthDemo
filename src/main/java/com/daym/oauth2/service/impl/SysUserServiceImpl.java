@@ -33,6 +33,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
          LambdaQueryWrapper<SysUser> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysUser::getUsername, username);
         SysUser sysUser =  this.getOne(queryWrapper);
+        if(sysUser==null){
+            throw new UsernameNotFoundException(username);
+        }
         return User.builder()
                 .username(sysUser.getUsername())  // 设置用户名
                 .password(sysUser.getPassword())  // 设置密码
