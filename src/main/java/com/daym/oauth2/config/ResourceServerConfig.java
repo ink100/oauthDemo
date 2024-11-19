@@ -74,14 +74,16 @@ public class ResourceServerConfig {
                 })
                 .formLogin(form -> form
 //                        .loginPage("/login")  // 自定义登录页面
-                        .loginProcessingUrl("/login")  // 处理登录请求
-                        .defaultSuccessUrl("/home", true)  // 登录成功后跳转的 URL
-                        .failureUrl("/loginError?error=true")// 登录失败后跳转的 URL
+                                .loginProcessingUrl("/login")  // 处理登录请求
+                                .defaultSuccessUrl("/home", true)  // 登录成功后跳转的 URL
+                                .failureUrl("/loginError?error=true")// 登录失败后跳转的 URL
+                                .successHandler(loginSuccessHandler)
+                        .failureHandler(loginFailureHandler)
 
                 )
-                .oauth2Login(oauth2Login -> oauth2Login
+             /*   .oauth2Login(oauth2Login -> oauth2Login
                         .successHandler(loginSuccessHandler)
-                        .failureHandler(loginFailureHandler))
+                        .failureHandler(loginFailureHandler))*/
 
                 .logout(logout -> logout.clearAuthentication(true)
                         .logoutUrl("/logout")
@@ -91,7 +93,7 @@ public class ResourceServerConfig {
                             .accessDeniedHandler(accessDeniedHandler);
                 })
                 .addFilterBefore(new JwtRequestFilter(userDetailsService, jwtUtil, whitelistUrls), UsernamePasswordAuthenticationFilter.class)
-                .authenticationProvider(usernamePasswordAuthenticationProvider())
+//                .authenticationProvider(usernamePasswordAuthenticationProvider())
 //                .authenticationProvider(phoneNumberAuthenticationProvider())
 //                .authenticationProvider(emailAuthenticationProvider())
         ;
@@ -99,6 +101,10 @@ public class ResourceServerConfig {
         return http.build();
     }
 
+    /**
+     * 用户密码登录
+     * @return
+     */
     @Bean
     public UsernamePasswordAuthenticationProvider usernamePasswordAuthenticationProvider() {
         return new UsernamePasswordAuthenticationProvider();
