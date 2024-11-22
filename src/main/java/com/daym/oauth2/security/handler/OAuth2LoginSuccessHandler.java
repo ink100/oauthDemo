@@ -11,6 +11,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
@@ -24,7 +25,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
         String username = authentication.getName();
-        String deviceId = request.getHeader("Device-Id"); // 获取 deviceId
+        String deviceId = Optional.ofNullable(request.getHeader("Device-Id")).orElse("nondevice"); // 获取 deviceId
         boolean rememberMe = request.getParameter("rememberMe") != null; // 获取 rememberMe
 
         // 生成 accessToken 和 refreshToken
@@ -35,10 +36,10 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         response.setHeader(jwtUtil.getRefreshTokenName(), tokens.get(jwtUtil.getRefreshTokenName()));
 
         // 可选：如果需要重定向到某个 URL，可以在此处设置
-        String redirectUrl = UriComponentsBuilder.fromUriString("http://localhost:8080/home")
+     /*   String redirectUrl = UriComponentsBuilder.fromUriString("http://localhost:8080/home")
                 .build()
                 .toUriString();
-        response.sendRedirect(redirectUrl);  // 登录成功后重定向到首页
+        response.sendRedirect(redirectUrl);  // 登录成功后重定向到首页*/
     }
 
 

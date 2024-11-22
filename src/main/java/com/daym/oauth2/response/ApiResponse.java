@@ -21,7 +21,7 @@ import java.util.List;
 public class ApiResponse<T> {
     private int code=200;             // 状态码：200 - 成功，非200 - 错误
     private String message="ok";       // 响应信息
-    private T data;               // 成功时的数据
+    private T data=null;               // 成功时的数据
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<FieldError> errors; // 字段级错误（如果有）
     @JsonSerialize(using = LocalDateTimeSerializer.class)

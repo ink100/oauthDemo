@@ -75,8 +75,8 @@ public class ResourceServerConfig {
                 .formLogin(form -> form
 //                        .loginPage("/login")  // 自定义登录页面
                                 .loginProcessingUrl("/login")  // 处理登录请求
-                                .defaultSuccessUrl("/home", true)  // 登录成功后跳转的 URL
-                                .failureUrl("/loginError?error=true")// 登录失败后跳转的 URL
+//                                .defaultSuccessUrl("/home", true)  // 登录成功后跳转的 URL
+//                                .failureUrl("/loginError?error=true")// 登录失败后跳转的 URL
                                 .successHandler(loginSuccessHandler)
                         .failureHandler(loginFailureHandler)
 

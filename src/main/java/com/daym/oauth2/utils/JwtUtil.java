@@ -4,6 +4,7 @@ import com.daym.oauth2.config.JwtProperties;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -21,12 +22,13 @@ public class JwtUtil {
 
     private final JwtProperties jwtProperties;
     private final SecretKey secretKey;
-    private final StringRedisTemplate redisTemplate;
+    @Autowired
+    private RedisTemplate<String,Object> redisTemplate;
+
 
     @Autowired
     public JwtUtil(JwtProperties jwtProperties, StringRedisTemplate redisTemplate) {
         this.jwtProperties = jwtProperties;
-        this.redisTemplate = redisTemplate;
         this.secretKey = generateKeyFromString(jwtProperties.getSecret());
     }
 
@@ -84,7 +86,7 @@ public class JwtUtil {
                 .claim("permissions", "read,write")  // 可以添加权限信息，增加长度
                 .claim("rememberMe", rememberMe)  //是否记住我
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .signWith(secretKey, SignatureAlgorithm.HS512)  // 使用较强的签名算法来增加安全性
+                .signWith(secretKey)  // 使用较强的签名算法来增加安全性
                 .compact();
     }
 
@@ -98,7 +100,7 @@ public class JwtUtil {
                 .claim("rememberMe", rememberMe)  //是否记住我
                 .setIssuedAt(new Date(System.currentTimeMillis()))
 
-                .signWith(secretKey, SignatureAlgorithm.ES256)  // 使用较轻量的签名算法，保持 Token 较短
+                .signWith(secretKey)  // 使用较轻量的签名算法，保持 Token 较短
                 .compact();
     }
     /**

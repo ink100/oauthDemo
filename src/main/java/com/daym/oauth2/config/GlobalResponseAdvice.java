@@ -1,15 +1,25 @@
 package com.daym.oauth2.config;
+import cn.hutool.json.JSONUtil;
 import com.daym.oauth2.response.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 import org.springframework.web.context.request.WebRequest;
 
+import java.lang.reflect.Method;
+import java.util.Objects;
+@Slf4j
+@Order(2)
 @ControllerAdvice(basePackages = "com.daym.oauth2")
 public class GlobalResponseAdvice implements ResponseBodyAdvice<Object> {
 
@@ -20,6 +30,14 @@ public class GlobalResponseAdvice implements ResponseBodyAdvice<Object> {
 
     @Override
     public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
+        Method method = returnType.getMethod();
+        //method为空、返回值为void、非JSON，直接跳过
+        if (Objects.isNull(method)
+                || method.getReturnType().equals(Void.TYPE)
+                || StringHttpMessageConverter.class.isAssignableFrom(converterType)) {
+            log.debug("method为空、返回值为void、String，跳过");
+            return false;
+        }
         return true;
     }
 
@@ -37,7 +55,10 @@ public class GlobalResponseAdvice implements ResponseBodyAdvice<Object> {
             return ApiResponse.success(null);  // 返回空的数据部分，但状态为200
         }else if (body instanceof ApiResponse) {
             return body;
-        }else{
+        } else if (body instanceof String) {
+            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+            return JSONUtil.toJsonStr(ApiResponse.success(body));
+        } else{
             // 如果返回值是一个普通类型的数据，直接封装成 ApiResponse
             return ApiResponse.success(body);
         }
