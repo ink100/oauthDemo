@@ -3,7 +3,8 @@ package com.daym.oauth2.controller;
 import com.daym.oauth2.entity.SysUser;
 import com.daym.oauth2.service.SysUserService;
 import jakarta.annotation.Resource;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -20,12 +21,21 @@ public class UserController {
 
   @Resource
   private SysUserService userService;
+  @Resource
+  private StringRedisTemplate stringRedisTemplate;
 
   @PostMapping("/register")
   public SysUser register(@RequestBody SysUser user) {
     return userService.register(user);
   }
-
+  @PostMapping("/query")
+  public String redisGet(@RequestParam String key) {
+    return stringRedisTemplate.opsForValue().get(key);
+  }
+  @PostMapping("/voidQuery")
+  public void voidQuery(@RequestParam String key) {
+    System.out.println("asd=========");
+  }
   @PostMapping("/login")
   public SysUser login(@RequestParam String username, @RequestParam String password) {
     return userService.login(username, password);

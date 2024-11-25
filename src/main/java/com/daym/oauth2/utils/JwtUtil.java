@@ -23,11 +23,11 @@ public class JwtUtil {
     private final JwtProperties jwtProperties;
     private final SecretKey secretKey;
     @Autowired
-    private RedisTemplate<String,Object> redisTemplate;
+    private StringRedisTemplate redisTemplate;
 
 
     @Autowired
-    public JwtUtil(JwtProperties jwtProperties, StringRedisTemplate redisTemplate) {
+    public JwtUtil(JwtProperties jwtProperties) {
         this.jwtProperties = jwtProperties;
         this.secretKey = generateKeyFromString(jwtProperties.getSecret());
     }

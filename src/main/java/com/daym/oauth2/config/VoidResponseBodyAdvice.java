@@ -1,10 +1,12 @@
 package com.daym.oauth2.config;
 
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONConfig;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.daym.oauth2.response.ApiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import com.nimbusds.jose.shaded.gson.JsonObject;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,13 +18,10 @@ import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.util.AntPathMatcher;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
 import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * Created with IntelliJ IDEA.
@@ -35,10 +34,10 @@ import java.util.Objects;
  * todo 后续调整
  */
 @ControllerAdvice
-@Order(value = 1)
-public class StringResponseBodyAdvice implements ResponseBodyAdvice<Object> {
+@Order(value =3)
+public class VoidResponseBodyAdvice implements ResponseBodyAdvice<Object> {
 
-    private final Logger logger = LoggerFactory.getLogger(StringResponseBodyAdvice.class);
+    private final Logger logger = LoggerFactory.getLogger(VoidResponseBodyAdvice.class);
 
 
     @Resource
@@ -62,31 +61,13 @@ public class StringResponseBodyAdvice implements ResponseBodyAdvice<Object> {
         Method method = methodParameter.getMethod();
 
         //method为空、返回值为void、非JSON，直接跳过
-        if (method.getReturnType().equals(Void.TYPE)
-                || !StringHttpMessageConverter.class.isAssignableFrom(clazz)) {
-            logger.debug("method为空、返回值为void、非String，跳过");
+        if (!method.getReturnType().equals(Void.TYPE)) {
+            logger.debug(" 返回值为不为void 跳过");
             return false;
         }
 
-        //有ExcludeFromGracefulResponse注解修饰的，也跳过
-        /*if (method.isAnnotationPresent(ExcludeFromGracefulResponse.class)) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Graceful Response:方法被@ExcludeFromGracefulResponse注解修饰，跳过:methodName={}", method.getName());
-            }
-            return false;
-        }*/
 
-        /*//配置了例外包路径，则该路径下的controller都不再处理
-        List<String> excludePackages = jwtProperties.get();
-        if (!CollectionUtils.isEmpty(excludePackages)) {
-            // 获取请求所在类的的包名
-            String packageName = method.getDeclaringClass().getPackage().getName();
-            if (excludePackages.stream().anyMatch(item -> ANT_PATH_MATCHER.match(item, packageName))) {
-                logger.debug("Graceful Response:匹配到excludePackages例外配置，跳过:packageName={},", packageName);
-                return false;
-            }
-        }*/
-        logger.debug("Graceful Response:非空返回值，需要进行封装");
+        logger.debug("void，需要进行封装");
         return true;
     }
 
@@ -101,17 +82,7 @@ public class StringResponseBodyAdvice implements ResponseBodyAdvice<Object> {
         JSONConfig config=new JSONConfig();
         config.setIgnoreNullValue(false);
         config.setDateFormat("yyyy-MM-dd HH:mm:ss");
-        //针对返回null的结果进行处理
-        if (body == null) {
-            return JSONUtil.toJsonStr(ApiResponse.success(body),config);
-        } else if (body instanceof ApiResponse<?>) {
-            return body;
-        } else {
-
-           /* Map<String,Object> map=new HashMap<>();
-            map.put(CommonConstant.SINGLE_KEY,body);*/
-           return JSONUtil.toJsonStr(ApiResponse.success(body),config);
-        }
+        return ApiResponse.success(new JSONObject());
     }
 
 }

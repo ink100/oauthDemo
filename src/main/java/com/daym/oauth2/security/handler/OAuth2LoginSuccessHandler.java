@@ -1,6 +1,8 @@
 package com.daym.oauth2.security.handler;
 
+import com.daym.oauth2.response.ApiResponse;
 import com.daym.oauth2.utils.JwtUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,7 +19,7 @@ import java.util.Optional;
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtUtil jwtUtil;
-
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(); // 单例
     public OAuth2LoginSuccessHandler(JwtUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
     }
@@ -34,7 +36,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         // 将生成的 Tokens 放到响应头中
         response.setHeader(jwtUtil.getAccessTokenName(), "Bearer " + tokens.get(jwtUtil.getAccessTokenName()));
         response.setHeader(jwtUtil.getRefreshTokenName(), tokens.get(jwtUtil.getRefreshTokenName()));
-
+        response.getWriter().write(OBJECT_MAPPER.writeValueAsString(ApiResponse.success(authentication)));
         // 可选：如果需要重定向到某个 URL，可以在此处设置
      /*   String redirectUrl = UriComponentsBuilder.fromUriString("http://localhost:8080/home")
                 .build()

@@ -11,7 +11,7 @@ spring:
   application:
     name: oauth2-demo
   datasource:
-    url: jdbc:mysql://aaaa:13306/oauth2?useUnicode=true&characterEncoding=UTF-8
+    url: jdbc:mysql://aaa:13306/oauth2?useUnicode=true&characterEncoding=UTF-8
     #&serverTimezone=Asia/Shanghai
     username: root
     password: xxx
@@ -22,15 +22,14 @@ spring:
     time-zone: Asia/Shanghai
     serialization:
       write-dates-as-timestamps: false
-
-
-
-    data:
+  data:
     redis:
       host: aaaa
       port: xxx
       password: myc2013.06
+      database: 1
       timeout: 6000ms
+
 
   # OAuth2 Client Configuration
 
@@ -77,7 +76,7 @@ oauth2:
 
 jwt:
   #??
-  secret: t6Ms511IDeqhNYxwqLyuSPevLN2QDfQA
+  secret: KxkRcKRRZmiAOZoidRodLtmZfgWPIUoWmbiJpjmOrSFlkMwCjbYgdieKyXneaWHWpVVzyqyzxXViRFTjIoMyjlmhqfgqtddySejgBVfqRxuxVefCpBZstOFSCcPsaTqY
   #access token ???? 5??
   accessTokenExpiration: 300000
   # refresh token ????1?
